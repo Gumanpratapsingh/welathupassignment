@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const FileMeta = require('../models/FileMeta');
-const Job = require('../models/Job');
+const FileMeta = require('../models/filemeta');
+const Job = require('../models/job');
 const { enqueue } = require('../services/jobqueue');
 
 const router = express.Router();

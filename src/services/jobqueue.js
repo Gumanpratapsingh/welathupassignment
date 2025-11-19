@@ -1,4 +1,4 @@
-const Job = require('../models/Job');
+const Job = require('../models/job');
 const processFileJob = require('./fileProcessor');
 
 const MAX_WORKERS = parseInt(process.env.MAX_WORKERS || '2', 10);

@@ -1,7 +1,7 @@
 const readline = require('readline');
 const { parse: parseCsv } = require('csv-parse/sync');
-const DataRecord = require('../models/DataRecord');
-const { getObjectStream } = require('./s3Service');
+const DataRecord = require('../models/datarecord');
+const { getObjectStream } = require('./s3service');
 
 const BATCH_SIZE = parseInt(process.env.BATCH_SIZE || '500', 10);
 
