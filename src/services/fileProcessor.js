@@ -67,6 +67,7 @@ async function processFileJob(job) {
   }
 
   job.totalLines = total;
+  await job.save();
 }
 
 module.exports = processFileJob;
