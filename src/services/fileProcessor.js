@@ -2,6 +2,7 @@ const readline = require('readline');
 const { parse: parseCsv } = require('csv-parse/sync');
 const DataRecord = require('../models/DataRecord');
 const { getObjectStream } = require('./s3service');
+const { isTextLikeFile } = require('../utils/isfilesafe');
 
 const BATCH_SIZE = parseInt(process.env.BATCH_SIZE || '500', 10);
 
@@ -30,6 +31,15 @@ async function processFileJob(job) {
   if (!job?.file) {
     throw new Error('Job missing file metadata');
   }
+  if (!(await isTextLikeFile(job.file))) {
+  job.status = 'failed';
+  job.error = `unsupported_content_type_or_extension: mimeType=${job.file?.mimeType || 'unknown'} ext=${job.file?.extension || job.file?.filename || 'unknown'}`;
+  job.finishedAt = new Date();
+  await job.save();
+  console.log(`[fileProcessor] job ${job._id} failed early: ${job.error}`);
+  return;
+}
+
 
   const { s3Key, _id: fileId, extension } = job.file;
   const stream = await getObjectStream(s3Key);

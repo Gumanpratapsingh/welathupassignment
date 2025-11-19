@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const FileMeta = require('../models/filemeta');
 const Job = require('../models/Job');
 const { enqueue } = require('../services/jobqueue');
+const { isTextLikeFile } = require('../utils/isfilesafe');
 
 const router = express.Router();
 
@@ -16,6 +17,16 @@ router.post('/:fileId', async (req, res) => {
     const file = await FileMeta.findById(fileId);
     if (!file) {
       return res.status(404).json({ message: 'File not found' });
+    }
+    if (!(await isTextLikeFile(file))) {
+      return res.status(400).json({
+        message: 'unsupported_file_type',
+        detail: {
+          mimeType: file?.mimeType || null,
+          extension: file?.extension || null,
+          filename: file?.filename || null
+        }
+      });
     }
 
     const priority = Number.isFinite(req.body?.priority) ? req.body.priority : 0;
