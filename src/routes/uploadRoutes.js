@@ -27,7 +27,7 @@ router.post('/', (req, res) => {
     headers: req.headers,
     limits: { fileSize: Number(process.env.MAX_UPLOAD_BYTES || 10 * 1024 * 1024 * 1024) },
   });
-  busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+  busboy.on('file', async (fieldname, file, filename, encoding, mimetype) => {
     if (responded) {
       file.resume();
       return;
