@@ -40,7 +40,7 @@ router.post('/', (req, res) => {
 
     const extension = filename.includes('.') ? filename.split('.').pop().toLowerCase() : '';
 
-    const safe = isTextLikeFile({
+    const safe = await isTextLikeFile({
       mimeType: mimetype,
       extension,
       filename
