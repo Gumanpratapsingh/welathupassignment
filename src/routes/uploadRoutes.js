@@ -4,6 +4,7 @@ const { PassThrough } = require('stream');
 const { S3Client } = require('@aws-sdk/client-s3');
 const { Upload } = require('@aws-sdk/lib-storage');
 const FileMeta = require('../models/filemeta');
+const { isTextLikeFile } = require('../utils/isfilesafe');
 
 const router = express.Router();
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
@@ -31,32 +32,54 @@ router.post('/', (req, res) => {
       file.resume();
       return;
     }
+
     if (!filename) {
       file.resume();
-      fail(400, { message: 'Filename required' });
-      return;
+      return fail(400, { message: "Filename required" });
     }
+
+    const extension = filename.includes('.') ? filename.split('.').pop().toLowerCase() : '';
+
+    const safe = isTextLikeFile({
+      mimeType: mimetype,
+      extension,
+      filename
+    });
+
+    if (!safe) {
+      file.resume();
+      return fail(415, {
+        message: "unsupported_file_type",
+        detail: { mimeType: mimetype, extension, filename }
+      });
+    }
+
     const key = makeKey(filename);
     const pass = new PassThrough();
+
     const upload = new Upload({
       client: s3Client,
       params: {
         Bucket: process.env.S3_BUCKET,
         Key: key,
         Body: pass,
-        ContentType: mimetype || 'application/octet-stream',
+        ContentType: mimetype || 'application/octet-stream'
       },
       queueSize: 4,
       partSize: 5 * 1024 * 1024,
     });
+
     file.pipe(pass);
-    const uploadpromise = upload.done().then(() => ({
+
+    const uploadPromise = upload.done().then(() => ({
       key,
       originalName: filename,
-      mimeType: mimetype || 'application/octet-stream',
+      mimeType: mimetype
     }));
-    pendingUploads.push(uploadpromise);
+
+    pendingUploads.push(uploadPromise);
   });
+
   busboy.on('error', err => {
     console.error(err);
     fail(500, { message: 'Upload failed' });
