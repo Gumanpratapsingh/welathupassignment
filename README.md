@@ -41,7 +41,7 @@ The API stays responsive during heavy ingestion because uploads stream straight 
 
 | Resource | Description |
 | --- | --- |
-| Hosted workspace | [Postman Workspace (share link)](https://web.postman.co/workspace/341a9624-1370-4015-8ba9-29aad9559c3c) – run the same requests online. |
+| Hosted workspace | [Postman Workspace (share link)](https://www.postman.com/gumanpratapsinghparmar/workspace/wealthup/collection/13310506-5725cfe7-bb5f-446b-9167-d327052279ae?action=share&source=copy-link&creator=13310506) – run the same requests online. |
 
 Instructions:
 1. Import the collection (file or workspace).
