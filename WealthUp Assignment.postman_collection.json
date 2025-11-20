@@ -1,0 +1,259 @@
+{
+	"info": {
+		"_postman_id": "cfbc62d7-3eba-4aca-9e86-784e5ade52b5",
+		"name": "WealthUp Assignment",
+		"description": "Collection covering upload + processing workflow. Set `baseUrl` to your deployed API root before running.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "13310506"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{baseUrl}}/health"
+			},
+			"response": [
+				{
+					"name": "Example 200",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/health"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": \"ok\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Upload Text File",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (!pm.response.body) {",
+							"    pm.test(\"response body\", function () { pm.expect.fail('Missing body'); });",
+							"    return;",
+							"}",
+							"const jsonData = pm.response.json();",
+							"const fileId = jsonData?.files?.[0]?._id;",
+							"if (fileId) {",
+							"    pm.collectionVariables.set('sampleFileId', fileId);",
+							"    console.log('Set sampleFileId to', fileId);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data; boundary=----WealthUpBoundary7MA4YWxk",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "------WealthUpBoundary7MA4YWxk\r\nContent-Disposition: form-data; name=\"file\"; filename=\"sample.csv\"\r\nContent-Type: text/csv\r\n\r\nfirst_name,last_name,email\r\nAda,Lovelace,ada@example.com\r\nAlan,Turing,alan@example.com\r\nGrace,Hopper,grace@example.com\r\n\r\n------WealthUpBoundary7MA4YWxk--",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": "{{baseUrl}}/upload",
+				"description": "Ready-to-send multipart payload that uploads a tiny CSV sample without needing local files."
+			},
+			"response": [
+				{
+					"name": "Example 201",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data; boundary=----WealthUpBoundary7MA4YWxk",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "------WealthUpBoundary7MA4YWxk\\r\\nContent-Disposition: form-data; name=\"file\"; filename=\"sample.csv\"\\r\\nContent-Type: text/csv\\r\\n\\r\\nfirst_name,last_name,email\\r\\nAda,Lovelace,ada@example.com\\r\\nAlan,Turing,alan@example.com\\r\\nGrace,Hopper,grace@example.com\\r\\n\\r\\n------WealthUpBoundary7MA4YWxk--",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/upload"
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"files\": [\n    {\n      \"_id\": \"6561f3a7c4d13c672b8c1234\",\n      \"s3Key\": \"1700501234567-abcd1234-sample.csv\",\n      \"originalName\": \"sample.csv\",\n      \"mimeType\": \"text/csv\",\n      \"extension\": \"csv\",\n      \"createdAt\": \"2023-11-20T10:20:35.123Z\",\n      \"updatedAt\": \"2023-11-20T10:20:35.123Z\",\n      \"__v\": 0\n    }\n  ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Enqueue File Processing",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const jsonData = pm.response.json();",
+							"if (jsonData?.jobId) {",
+							"    pm.collectionVariables.set('sampleJobId', jsonData.jobId);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"priority\": 1\n}"
+				},
+				"url": "{{baseUrl}}/process/{{sampleFileId}}",
+				"description": "Queues a job for the previously uploaded file (uses collection var `sampleFileId`)."
+			},
+			"response": [
+				{
+					"name": "Example 202",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"priority\": 1\n}"
+						},
+						"url": "{{baseUrl}}/process/{{sampleFileId}}"
+					},
+					"status": "Accepted",
+					"code": 202,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"jobId\": \"6561f459c4d13c672b8c5678\",\n  \"status\": \"queued\",\n  \"queuedAt\": \"2023-11-20T10:25:13.456Z\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Job Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{baseUrl}}/process/job/{{sampleJobId}}",
+				"description": "Fetches the job document (includes file metadata and progress)."
+			},
+			"response": [
+				{
+					"name": "Example 200",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/process/job/{{sampleJobId}}"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"_id\": \"6561f459c4d13c672b8c5678\",\n  \"file\": {\n    \"_id\": \"6561f3a7c4d13c672b8c1234\",\n    \"originalName\": \"sample.csv\",\n    \"mimeType\": \"text/csv\",\n    \"extension\": \"csv\"\n  },\n  \"status\": \"processing\",\n  \"processedLines\": 120,\n  \"totalLines\": 150,\n  \"attempts\": 1,\n  \"priority\": 1,\n  \"createdAt\": \"2023-11-20T10:25:13.456Z\",\n  \"startedAt\": \"2023-11-20T10:25:30.789Z\",\n  \"finishedAt\": null\n}"
+				}
+			]
+		},
+		{
+			"name": "List Jobs for File",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{baseUrl}}/process/file/{{sampleFileId}}/jobs",
+				"description": "Lists the 20 most recent jobs tied to a file."
+			},
+			"response": [
+				{
+					"name": "Example 200",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/process/file/{{sampleFileId}}/jobs"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"jobs\": [\n    {\n      \"_id\": \"6561f459c4d13c672b8c5678\",\n      \"status\": \"completed\",\n      \"priority\": 1,\n      \"createdAt\": \"2023-11-20T10:25:13.456Z\",\n      \"finishedAt\": \"2023-11-20T10:27:01.012Z\"\n    },\n    {\n      \"_id\": \"6561f500c4d13c672b8c6789\",\n      \"status\": \"failed\",\n      \"priority\": 0,\n      \"createdAt\": \"2023-11-20T09:10:03.111Z\",\n      \"finishedAt\": \"2023-11-20T09:11:22.333Z\"\n    }\n  ]\n}"
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://51.20.66.95:3000",
+			"type": "string"
+		},
+		{
+			"key": "sampleFileId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sampleJobId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
