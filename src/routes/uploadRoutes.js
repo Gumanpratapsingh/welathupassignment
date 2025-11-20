@@ -4,7 +4,7 @@ const { PassThrough } = require('stream');
 const { S3Client } = require('@aws-sdk/client-s3');
 const { Upload } = require('@aws-sdk/lib-storage');
 const FileMeta = require('../models/filemeta');
-const { isTextLikeFile } = require('../utils/isfilesafe');
+const { ensureTextLikeFile } = require('../utils/isfilesafe');
 
 const router = express.Router();
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
@@ -40,17 +40,24 @@ router.post('/', (req, res) => {
 
     const extension = filename.includes('.') ? filename.split('.').pop().toLowerCase() : '';
 
-    const safe = await isTextLikeFile({
-      mimeType: mimetype,
-      extension,
-      filename
-    });
-
-    if (!safe) {
+    try {
+      await ensureTextLikeFile(
+        {
+          mimeType: mimetype,
+          extension,
+          filename,
+        },
+        'upload'
+      );
+    } catch (validationError) {
       file.resume();
-      return fail(415, {
-        message: "unsupported_file_type",
-        detail: { mimeType: mimetype, extension, filename }
+      return fail(validationError.statusCode || 415, {
+        message: validationError.message || 'unsupported_file_type',
+        detail: validationError.detail || {
+          mimeType: mimetype,
+          extension,
+          filename,
+        },
       });
     }
 
